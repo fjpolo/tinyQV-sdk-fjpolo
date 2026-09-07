@@ -50,10 +50,12 @@ void __attribute__((section(".early_text"))) __runtime_init(void) {
     // Runs after .data/.bss so constructors see initialized globals.
     {
         typedef void (*init_fn)(void);
-        extern init_fn __init_array_start[];
-        extern init_fn __init_array_end[];
-        for (init_fn *f = __init_array_start; f != __init_array_end; ++f)
-            (*f)();
+        extern init_fn __init_array_start[] __attribute__((weak));
+        extern init_fn __init_array_end[] __attribute__((weak));
+        if (__init_array_start && __init_array_end) {
+            for (init_fn *f = __init_array_start; f != __init_array_end; ++f)
+                (*f)();
+        }
     }
 }
 
