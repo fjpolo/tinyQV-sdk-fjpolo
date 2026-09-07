@@ -4,13 +4,16 @@ CC = $(RISCV_TOOLCHAIN)/bin/riscv32-unknown-elf-gcc
 AS = $(RISCV_TOOLCHAIN)/bin/riscv32-unknown-elf-as
 AR = $(RISCV_TOOLCHAIN)/bin/riscv32-unknown-elf-ar
 
-all: tinyQV.a tinyQV-sim.a tinyQV-asteroids.a start.o
+all: tinyQV.a tinyQV-sim.a tinyQV-asteroids.a tinyQV-berzerk.a start.o
 
 clean:
-	rm -f *.o *.a fatfs/*.o sdcard/*.o
+	rm -f *.o *.a fatfs/*.o sdcard/*.o peripherals/*.o
 
 peripherals/%_asteroids.o: peripherals/%.c
 	$(CC) -O2 -march=rv32ec_zicsr_zcb_zicond -mabi=ilp32e -DTQV_ASTEROIDS -nostdlib -nostartfiles -ffreestanding -ffunction-sections -fdata-sections -Wall -Werror -lc -I$(CURDIR) -c $< -o $@
+
+peripherals/rv2a03.o: peripherals/rv2a03.c
+	$(CC) -O2 -march=rv32ec_zicsr_zcb_zicond -mabi=ilp32e -nostdlib -nostartfiles -ffreestanding -ffunction-sections -fdata-sections -Wall -Werror -lc -I$(CURDIR) -c $< -o $@
 
 %.o: %.c 
 	$(CC) -O2 -march=rv32ec_zicsr_zcb_zicond -mabi=ilp32e -nostdlib -nostartfiles -ffreestanding -ffunction-sections -fdata-sections -Wall -Werror -lc -I$(CURDIR) -c $< -o $@
@@ -31,6 +34,9 @@ tinyQV-sim.a: uart_sim.o uart_buf_sim.o mul.o isqrt.o peripheral.o runtime.o spi
 	$(AR) rcs $@ $^
 
 tinyQV-asteroids.a: peripherals/prism.o peripherals/vga_gfx.o peripherals/vga_gfx_asm.o peripherals/vga_console.o
+	$(AR) rcs $@ $^
+
+tinyQV-berzerk.a: peripherals/rv2a03.o
 	$(AR) rcs $@ $^
 
 tinyQV-sd.a: sdcard/sdcard.o fatfs/ff.o fatfs/ffsystem.o fatfs/ffunicode.o
