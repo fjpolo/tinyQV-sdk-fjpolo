@@ -23,7 +23,12 @@ void rv2a03_init(void) {
 }
 
 void rv2a03_enable_channels(uint8_t channel_mask) {
-    rv2a03_write_reg(RV2A03_REG_STATUS, channel_mask);
+    // Hardware adaptation for taped-out APU silicon:
+    // Register $4015 write decode is sampled on apu_ce_sync (8 out of 12 clock cycles).
+    // Writing across a 16-cycle burst guarantees the write lands in the active window.
+    for (int i = 0; i < 16; i++) {
+        rv2a03_write_reg(RV2A03_REG_STATUS, channel_mask);
+    }
 }
 
 void rv2a03_mute(void) {
@@ -39,7 +44,9 @@ void rv2a03_mute(void) {
     rv2a03_write_reg(RV2A03_REG_NOISE_VOL, 0x30);
 
     // 4. Disable all channels in status register ($4015)
-    rv2a03_write_reg(RV2A03_REG_STATUS, 0x00);
+    for (int i = 0; i < 16; i++) {
+        rv2a03_write_reg(RV2A03_REG_STATUS, 0x00);
+    }
 }
 
 void rv2a03_set_pulse1(uint8_t duty, uint8_t volume, bool const_vol, bool loop_env,
