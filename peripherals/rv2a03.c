@@ -15,8 +15,8 @@ void rv2a03_init(void) {
     // Enable clock in peripheral Configuration 0
     rv2a03_write_reg(RV2A03_REG_CONFIG0, RV2A03_CFG_CE);
 
-    // Disable all channels initially
-    rv2a03_write_reg(RV2A03_REG_STATUS, 0x00);
+    // Mute all channels cleanly to prevent DC leakage on taped-out silicon
+    rv2a03_mute();
 
     // Reset frame counter
     rv2a03_write_reg(RV2A03_REG_FRAME_CNT, 0x00);
@@ -27,6 +27,18 @@ void rv2a03_enable_channels(uint8_t channel_mask) {
 }
 
 void rv2a03_mute(void) {
+    // Hardware Workaround for Taped-Out Silicon:
+    // 1. Force Pulse 1 & Pulse 2 volume to 0 (constant volume 1, vol 0)
+    rv2a03_write_reg(RV2A03_REG_SQ1_VOL, 0x30);
+    rv2a03_write_reg(RV2A03_REG_SQ2_VOL, 0x30);
+
+    // 2. Clear Triangle linear counter
+    rv2a03_write_reg(RV2A03_REG_TRI_LINEAR, 0x00);
+
+    // 3. Force Noise volume to 0 (constant volume 1, vol 0)
+    rv2a03_write_reg(RV2A03_REG_NOISE_VOL, 0x30);
+
+    // 4. Disable all channels in status register ($4015)
     rv2a03_write_reg(RV2A03_REG_STATUS, 0x00);
 }
 
